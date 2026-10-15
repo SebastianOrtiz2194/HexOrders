@@ -103,24 +103,6 @@ class GetOrderServiceTest {
     }
 
     /**
-     * Verifies that updating an order's status also evicts the now-stale cache entry.
-     */
-    @Test
-    void shouldUpdateStatusAndEvictCache() {
-        // Arrange
-        when(orderCachePort.findById(orderId)).thenReturn(Optional.of(dummyOrder));
-        when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
-
-        // Act
-        Order result = getOrderService.updateStatus(orderId, OrderStatus.CONFIRMED);
-
-        // Assert
-        assertEquals(OrderStatus.CONFIRMED, result.getStatus());
-        verify(orderRepository, times(1)).save(any(Order.class));
-        verify(orderCachePort, times(1)).evict(orderId);
-    }
-
-    /**
      * Verifies paginated retrieval of all orders from the repository.
      */
     @Test

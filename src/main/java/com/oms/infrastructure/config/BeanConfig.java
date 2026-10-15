@@ -5,6 +5,7 @@ import com.oms.application.port.output.OrderEventPublisherPort;
 import com.oms.application.port.output.OrderRepositoryPort;
 import com.oms.application.service.CreateOrderService;
 import com.oms.application.service.GetOrderService;
+import com.oms.application.service.UpdateOrderStatusService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,5 +29,12 @@ public class BeanConfig {
             OrderRepositoryPort orderRepositoryPort,
             OrderCachePort orderCachePort) {
         return new GetOrderService(orderRepositoryPort, orderCachePort);
+    }
+
+    @Bean
+    public UpdateOrderStatusService updateOrderStatusService(
+            OrderRepositoryPort orderRepositoryPort,
+            OrderCachePort orderCachePort) {
+        return new UpdateOrderStatusService(orderRepositoryPort, orderCachePort);
     }
 }

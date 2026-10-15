@@ -1,7 +1,6 @@
 package com.oms.application.service;
 
 import com.oms.application.port.input.GetOrderUseCase;
-import com.oms.application.port.input.UpdateOrderStatusUseCase;
 import com.oms.application.port.output.OrderCachePort;
 import com.oms.application.port.output.OrderRepositoryPort;
 import com.oms.domain.exception.OrderNotFoundException;
@@ -13,12 +12,13 @@ import lombok.RequiredArgsConstructor;
 import java.util.UUID;
 
 /**
- * Orchestrates order retrieval and updates.
+ * Orchestrates order queries (retrieval only).
+ * Follows CQRS by isolating read operations from write mutations.
  * Implements a 'Cache-Aside' pattern: We attempt to fetch the order from the cache (e.g., Redis). 
  * On a cache miss, we read from the primary database and subsequently populate the cache.
  */
 @RequiredArgsConstructor
-public class GetOrderService implements GetOrderUseCase, UpdateOrderStatusUseCase {
+public class GetOrderService implements GetOrderUseCase {
 
     private final OrderRepositoryPort orderRepository;
     private final OrderCachePort orderCachePort;
@@ -36,21 +36,6 @@ public class GetOrderService implements GetOrderUseCase, UpdateOrderStatusUseCas
                     orderCachePort.save(orderFromDb);
                     return orderFromDb;
                 });
-    }
-
-    @Override
-    public Order updateStatus(UUID id, OrderStatus newStatus) {
-        // Read from our dedicated internal retrieval method (which employs cache-aside)
-        Order order = this.getOrderById(id);
-        
-        // Delegate transactional logic directly to the core business model (avoids an Anemic Domain Model)
-        order.updateStatus(newStatus);
-        
-        // Persist through the port and evict the dirty cache entry (prevents stale data)
-        Order saved = orderRepository.save(order);
-        orderCachePort.evict(id);
-        
-        return saved;
     }
 
     @Override
