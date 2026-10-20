@@ -74,7 +74,7 @@ class PostgresOrderAdapterIT {
     // ─── Factory Methods ────────────────────────────────────────────────────────
 
     /**
-     * Generates a sample domain Order, leveraging the actual aggregate root logic.
+     * Generates a sample domain Order, leveraging the actual aggregate root factory method.
      */
     private Order buildSampleOrder() {
         OrderItem item = OrderItem.builder()
@@ -84,13 +84,7 @@ class PostgresOrderAdapterIT {
                 .unitPrice(new BigDecimal("1299.99"))
                 .build();
 
-        Order order = Order.builder()
-                .customerName("Jane Doe")
-                .items(List.of(item))
-                .build();
-
-        order.validateAndInitialize();
-        return order;
+        return Order.create("Jane Doe", List.of(item));
     }
 
     // ─── Tests ──────────────────────────────────────────────────────────────────

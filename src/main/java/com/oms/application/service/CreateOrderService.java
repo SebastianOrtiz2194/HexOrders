@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
  * Primary orchestrator for the "Create Order" workflow.
  * 
  * Workflow:
- * 1. Delegates to the pure domain model (validateAndInitialize) to enforce business rules.
+ * 1. Delegates to the pure domain model factory (Order.create) to enforce business rules and invariants.
  * 2. Commands the repository output port to persist the object.
  * 3. Publishes a Domain Event to notify downstream sub-systems (e.g., via Kafka).
  * 
@@ -26,11 +26,13 @@ public class CreateOrderService implements CreateOrderUseCase {
 
     @Override
     public Order createOrder(Order orderCommand) {
-        // 1. Domain: Validate rules and define initial state
-        orderCommand.validateAndInitialize();
+        // 1. Domain: Validate business invariants and instantiate pristine aggregate via Domain Factory
+        Order order = (orderCommand.getId() != null && orderCommand.getStatus() != null)
+                ? orderCommand
+                : Order.create(orderCommand.getCustomerName(), orderCommand.getItems());
         
         // 2. Secondary persistence port
-        Order savedOrder = orderRepository.save(orderCommand);
+        Order savedOrder = orderRepository.save(order);
         
         // 3. Local generation of the Async Domain Event
         OrderCreatedEvent event = new OrderCreatedEvent(

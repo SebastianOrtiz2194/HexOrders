@@ -32,27 +32,53 @@ public class Order {
     private LocalDateTime updatedAt;
 
     /**
+     * Domain Factory Method: Creates a new, fully validated and initialized Order aggregate root.
+     * Enforces the DDD rule that an aggregate can never exist in an uninitialized or invalid state.
+     *
+     * @param customerName Name of the customer placing the order.
+     * @param items List of items in the order.
+     * @return A valid Order aggregate in PENDING status with an ID, timestamps, and total amount.
+     * @throws InvalidOrderException if any invariant is violated.
+     */
+    public static Order create(String customerName, List<OrderItem> items) {
+        validateCustomerName(customerName);
+        validateItems(items);
+
+        List<OrderItem> defensiveItems = List.copyOf(items);
+        BigDecimal total = calculateTotal(defensiveItems);
+        LocalDateTime now = LocalDateTime.now();
+
+        return Order.builder()
+                .id(UUID.randomUUID())
+                .customerName(customerName.trim())
+                .items(defensiveItems)
+                .status(OrderStatus.PENDING)
+                .totalAmount(total)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    /**
      * Domain behavior: Calculates the total amount of the order based on its items
      * and forces the initial state to PENDING when validating an incoming order request.
      * <p>
      * We avoid using standard "Setters" here. Any state mutation goes through 
      * explicit domain methods that enforce consistency and business rules (e.g., updateStatus()).
+     *
+     * @deprecated Prefer the static factory method {@link #create(String, List)} 
+     * to prevent creating anemic or uninitialized aggregate instances.
      */
+    @Deprecated(since = "1.1")
     public void validateAndInitialize() {
-        if (customerName == null || customerName.trim().isEmpty()) {
-            throw new InvalidOrderException("Customer name cannot be empty");
-        }
-        if (items == null || items.isEmpty()) {
-            throw new InvalidOrderException("Order must have at least one item");
-        }
-        items.forEach(OrderItem::validate);
+        validateCustomerName(this.customerName);
+        validateItems(this.items);
 
+        this.customerName = this.customerName.trim();
         this.status = OrderStatus.PENDING;
         
         // Sum all item subtotals using Java Streams
-        this.totalAmount = items.stream()
-                .map(OrderItem::calculateSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        this.totalAmount = calculateTotal(this.items);
         
         // Assign a default ID if none exists. This proves valuable when the 
         // JPA repository attempts to persist the entity by treating it as a new record.
@@ -64,6 +90,25 @@ public class Order {
             this.createdAt = LocalDateTime.now();
         }
         this.updatedAt = LocalDateTime.now();
+    }
+
+    private static void validateCustomerName(String customerName) {
+        if (customerName == null || customerName.trim().isEmpty()) {
+            throw new InvalidOrderException("Customer name cannot be empty");
+        }
+    }
+
+    private static void validateItems(List<OrderItem> items) {
+        if (items == null || items.isEmpty()) {
+            throw new InvalidOrderException("Order must have at least one item");
+        }
+        items.forEach(OrderItem::validate);
+    }
+
+    private static BigDecimal calculateTotal(List<OrderItem> items) {
+        return items.stream()
+                .map(OrderItem::calculateSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**
