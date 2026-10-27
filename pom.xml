@@ -10,9 +10,9 @@
   </parent>
   
   <groupId>com.oms</groupId>
-  <artifactId>order-management-system-hexagonal</artifactId>
+  <artifactId>hex-orders</artifactId>
   <version>1.0.0-SNAPSHOT</version>
-  <name>order-management-system-hexagonal</name>
+  <name>HexOrders</name>
   <description>OMS using Hexagonal Architecture, Kafka, Redis, and Postgres</description>
 
   <properties>

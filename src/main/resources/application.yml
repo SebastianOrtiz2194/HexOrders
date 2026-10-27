@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: order-management-system-hexagonal
+    name: hex-orders
   
   # ==============================================================
   # PERSISTENCE: PostgreSQL

@@ -10,7 +10,7 @@
 #   docker-compose down -v          -> Destroy containers AND volumes
 # =============================================================================
 
-version: "3.9"
+name: hexorders
 
 # ---------------------------------------------------------------------------
 # Networks: using a dedicated bridge network to isolate the OMS stack.
